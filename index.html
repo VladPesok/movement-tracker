@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ДБНК Переміщення</title>
+  <style>
+    :root {
+      --bg: #080b10;
+      --bg-card: #0e1319;
+      --bg-input: #131a24;
+      --bg-hover: #1a2435;
+      --border: rgba(255,255,255,0.06);
+      --border-focus: rgba(59,130,246,0.55);
+      --text: #edf2f7;
+      --text-dim: #a0aec0;
+      --text-muted: #546178;
+      --accent: #3b82f6;
+      --accent-dark: #2563eb;
+      --accent-glow: rgba(59,130,246,0.14);
+      --danger: #ef4444;
+      --danger-glow: rgba(239,68,68,0.1);
+      --success: #22c55e;
+      --success-glow: rgba(34,197,94,0.1);
+      --warning: #f59e0b;
+      --warning-glow: rgba(245,158,11,0.1);
+      --radius: 14px;
+      --radius-lg: 20px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.45);
+      --tr: 0.18s ease;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { touch-action: manipulation; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      min-height: 100vh;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(255,255,255,0.07);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    .spinner-sm { width: 18px; height: 18px; border-width: 2.5px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Header ────────────────────── */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 18px;
+      background: rgba(8,11,16,0.97);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      min-height: 72px;
+    }
+    .header-title {
+      font-size: 22px; font-weight: 800;
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .emergency-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 60px; height: 60px; border-radius: 16px;
+      border: 1px solid rgba(245,158,11,0.3);
+      background: var(--warning-glow);
+      color: #fbbf24;
+      font-family: inherit; cursor: pointer;
+      transition: background var(--tr);
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+    .emergency-btn:active { background: rgba(245,158,11,0.22); }
+    .emergency-btn > span { display: none; }
+
+    /* ── Main ─────────────────────── */
+    .main { width: 100%; padding: 16px 16px 60px; }
+
+    /* ── Banner ────────────────────── */
+    .banner {
+      padding: 20px 18px; border-radius: 18px; margin-bottom: 16px;
+      border: 1px solid rgba(59,130,246,0.18); background: rgba(59,130,246,0.06);
+    }
+    .banner-title { font-weight: 700; font-size: 18px; margin-bottom: 6px; }
+    .banner-text { font-size: 16px; color: var(--text-muted); line-height: 1.5; }
+
+    .header-left {
+      display: flex; align-items: center; gap: 10px; min-width: 0;
+    }
+    .offline-badge {
+      display: flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border-radius: 8px;
+      color: #eab308;
+      background: rgba(234,179,8,0.12);
+      border: 1px solid rgba(234,179,8,0.35);
+      flex-shrink: 0;
+    }
+
+    /* ── Card ──────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      padding: 28px 20px;
+      margin-bottom: 16px;
+    }
+    .hidden { display: none !important; }
+
+    .header-back-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 60px; height: 60px; border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-dim); cursor: pointer;
+      -webkit-tap-highlight-color: transparent; outline: none;
+      transition: background var(--tr), color var(--tr);
+      flex-shrink: 0;
+    }
+    .header-back-btn:active { background: rgba(255,255,255,0.1); color: var(--text); }
+    .header-back-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    .section-title {
+      font-size: 26px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 26px;
+    }
+
+    /* ── Fields ────────────────────── */
+    .field { margin-bottom: 22px; }
+    .field-label {
+      display: block; font-size: 14px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      color: var(--text-muted); margin-bottom: 12px;
+    }
+
+    .input {
+      width: 100%; padding: 20px 20px; border-radius: 16px;
+      border: 1px solid var(--border); background: var(--bg-input);
+      color: var(--text); font-size: 18px; font-family: inherit;
+      outline: none; -webkit-tap-highlight-color: transparent;
+      transition: border-color var(--tr);
+      min-height: 64px;
+    }
+    .input::placeholder { color: var(--text-muted); }
+    .input:focus-visible { border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .input:disabled { opacity: 0.45; }
+
+    /* ── Person row ───────────────── */
+    .person-row { display: flex; gap: 12px; margin-bottom: 12px; }
+    .person-row .input { flex: 1; }
+
+    /* ── Remove button ────────────── */
+    .remove-btn {
+      width: 64px; flex: 0 0 64px; min-height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px;
+      border: 1px solid rgba(239,68,68,0.15); background: rgba(239,68,68,0.05);
+      color: #f87171; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; outline: none;
+    }
+    .remove-btn:active { background: rgba(239,68,68,0.16); }
+    .remove-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── Add person ───────────────── */
+    .add-person-btn {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 20px; border-radius: 16px; min-height: 64px;
+      border: 1px dashed rgba(255,255,255,0.14); background: transparent;
+      color: var(--text-muted); font-size: 18px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      -webkit-tap-highlight-color: transparent; outline: none;
+    }
+    .add-person-btn:active { border-color: rgba(255,255,255,0.28); color: var(--text-dim); }
+    .add-person-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ── Buttons ───────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; border: none; border-radius: 18px;
+      padding: 22px 24px; font-size: 19px; font-weight: 800;
+      font-family: inherit; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.5px; min-height: 68px;
+      -webkit-tap-highlight-color: transparent; outline: none;
+      transition: opacity var(--tr), transform var(--tr);
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn:not(:disabled):active { transform: scale(0.97); opacity: 0.9; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: #fff; box-shadow: 0 6px 24px rgba(37,99,235,0.3);
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.04); color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* ── Messages ──────────────────── */
+    .message {
+      margin-top: 16px; border-radius: 16px; padding: 16px 18px;
+      display: none; font-weight: 600; font-size: 16px; line-height: 1.5;
+    }
+    .message.error {
+      display: block; background: var(--danger-glow);
+      border: 1px solid rgba(239,68,68,0.2); color: #fca5a5;
+    }
+    .message.success {
+      display: block; background: var(--success-glow);
+      border: 1px solid rgba(34,197,94,0.2); color: #86efac;
+    }
+
+    /* ── Summary ───────────────────── */
+    .summary {
+      margin-top: 20px; padding: 20px; border-radius: 16px;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    }
+    .summary-item {
+      margin-bottom: 12px; line-height: 1.6; color: var(--text-dim); font-size: 17px;
+    }
+    .summary-item:last-child { margin-bottom: 0; }
+    .summary-item strong { color: var(--text); }
+    .summary-actions { margin-top: 20px; }
+    .code-note { margin-top: 10px; color: var(--text-muted); font-size: 14px; }
+
+    .code-input-row { display: flex; gap: 12px; }
+    .code-input-row .input { flex: 1; }
+    .find-btn {
+      width: 64px; flex: 0 0 64px; min-height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); color: var(--text-dim);
+      cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none;
+    }
+    .find-btn:active { background: rgba(255,255,255,0.1); color: var(--text); }
+    .find-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Done screen ───────────────── */
+    .done-screen { text-align: center; padding: 60px 24px; }
+    .done-icon {
+      width: 90px; height: 90px; margin: 0 auto 24px; border-radius: 50%;
+      background: var(--success-glow); border: 2px solid rgba(34,197,94,0.25);
+      display: flex; align-items: center; justify-content: center; color: var(--success);
+    }
+    .done-title {
+      font-size: 32px; font-weight: 900;
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px;
+    }
+    .done-sub { color: var(--text-muted); font-size: 18px; }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-left">
+      <div class="header-title">ДБНК Переміщення</div>
+      <div id="offlineBadge" class="offline-badge hidden" title="Офлайн — дані не зберігаються">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+          <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+          <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+          <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+          <circle cx="12" cy="20" r="1" fill="currentColor"/>
+        </svg>
+      </div>
+    </div>
+    <button id="headerEmergencyBtn" class="emergency-btn" onclick="openFinishFromEmergency()" title="Екстрено перейти до завершення">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+        <line x1="4" y1="22" x2="4" y2="15"/>
+      </svg>
+    </button>
+    <button id="headerBackBtn" class="header-back-btn hidden" onclick="goBack()" title="Назад">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="main">
+    <div id="activeBanner" class="banner hidden">
+      <div class="banner-title">Є активне переміщення</div>
+      <div class="banner-text">Поки поточне не завершено, нове створити не можна.</div>
+    </div>
+
+    <div id="startScreen" class="card">
+      <h2 class="section-title">Почати переміщення</h2>
+
+      <div class="field">
+        <label class="field-label">Хто переміщується</label>
+        <div id="peopleContainer"></div>
+        <button type="button" class="add-person-btn" id="addPersonBtn" onclick="addPersonRow()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          Додати людину
+        </button>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="fromInput">Звідки</label>
+        <input id="fromInput" class="input" type="text" placeholder="Місце вибуття">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="toInput">Куди</label>
+        <input id="toInput" class="input" type="text" placeholder="Місце прибуття">
+      </div>
+
+      <button id="startBtn" class="btn btn-primary" onclick="submitStart()">Почати переміщення</button>
+      <div id="startMessage" class="message"></div>
+    </div>
+
+    <div id="finishScreen" class="card hidden">
+      <h2 class="section-title">Завершити переміщення</h2>
+
+      <div class="field">
+        <label class="field-label" for="codeInput">Код переміщення</label>
+        <div class="code-input-row">
+          <input id="codeInput" class="input" type="text" placeholder="Введіть код">
+          <button id="findBtn" class="find-btn" onclick="findMovement()" title="Завантажити переміщення">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
+        <div class="code-note">Код зберігається на пристрої до завершення.</div>
+      </div>
+      <div id="finishMessage" class="message"></div>
+
+      <div id="movementInfo" class="summary hidden">
+        <div class="summary-item"><strong>Люди:</strong> <span id="infoPeople"></span></div>
+        <div class="summary-item"><strong>Звідки:</strong> <span id="infoFrom"></span></div>
+        <div class="summary-item"><strong>Куди:</strong> <span id="infoTo"></span></div>
+        <div class="summary-actions">
+          <button id="finishBtn" class="btn btn-primary" onclick="submitFinish()">Прибув</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="doneScreen" class="card hidden">
+      <div class="done-screen">
+        <div class="done-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="done-title">Завершено</div>
+        <p class="done-sub">Повернення на початок через 5 сек...</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    var STORAGE_KEY = 'activeMovementCode';
+    var currentMovement = null;
+    var redirectTimer = null;
+
+    function showScreen(id) {
+      ['startScreen', 'finishScreen', 'doneScreen'].forEach(function(s) {
+        document.getElementById(s).classList.toggle('hidden', s !== id);
+      });
+      var onFinish = id === 'finishScreen';
+      document.getElementById('headerEmergencyBtn').classList.toggle('hidden', onFinish);
+      document.getElementById('headerBackBtn').classList.toggle('hidden', !onFinish);
+      if (onFinish) updateHeaderBackBtn();
+    }
+
+    function updateHeaderBackBtn() {
+      var btn = document.getElementById('headerBackBtn');
+      if (btn) btn.disabled = !!currentMovement;
+    }
+
+    function setStoredCode(code) {
+      if (code) localStorage.setItem(STORAGE_KEY, code);
+      else localStorage.removeItem(STORAGE_KEY);
+    }
+    function getStoredCode() { return localStorage.getItem(STORAGE_KEY) || ''; }
+    function hasActiveMovement() { return !!getStoredCode(); }
+
+    function updateLockedState() {
+      var locked = hasActiveMovement();
+      document.getElementById('activeBanner').classList.toggle('hidden', !locked);
+      document.getElementById('startBtn').disabled = locked;
+      document.getElementById('addPersonBtn').disabled = locked;
+      document.querySelectorAll('#startScreen .input').forEach(function(el) { el.disabled = locked; });
+      document.querySelectorAll('#startScreen .remove-btn').forEach(function(el) { el.disabled = locked; });
+    }
+
+    function showMessage(id, text, type) {
+      var el = document.getElementById(id);
+      el.className = 'message ' + type;
+      el.textContent = text;
+    }
+    function clearMessage(id) {
+      var el = document.getElementById(id);
+      el.className = 'message';
+      el.textContent = '';
+    }
+
+    function setButtonLoading(btn, loading) {
+      if (loading) {
+        btn.dataset.origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner spinner-sm"></span>';
+      } else {
+        btn.innerHTML = btn.dataset.origHtml || '';
+        btn.disabled = false;
+      }
+    }
+
+    /* ── Person rows ────────────── */
+
+    function updateRemoveButtons() {
+      var rows = document.querySelectorAll('.person-row');
+      var single = rows.length <= 1;
+      rows.forEach(function(r) {
+        r.querySelector('.remove-btn').style.display = single ? 'none' : '';
+      });
+    }
+
+    function addPersonRow() {
+      if (hasActiveMovement()) return;
+      var container = document.getElementById('peopleContainer');
+
+      var row = document.createElement('div');
+      row.className = 'person-row';
+
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'input';
+      input.placeholder = 'ПІБ';
+
+      var removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-btn';
+      removeBtn.innerHTML =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">' +
+          '<path d="M18 6L6 18M6 6l12 12"/>' +
+        '</svg>';
+      removeBtn.onclick = function() {
+        if (document.querySelectorAll('.person-row').length > 1) {
+          row.remove();
+          updateRemoveButtons();
+        }
+      };
+
+      row.appendChild(input);
+      row.appendChild(removeBtn);
+      container.appendChild(row);
+      updateRemoveButtons();
+      input.focus();
+    }
+
+    function getCurrentlySelectedPeople() {
+      return Array.from(document.querySelectorAll('#peopleContainer .person-row .input'))
+        .map(function(el) { return el.value.trim(); })
+        .filter(Boolean);
+    }
+
+    function clearStartForm() {
+      document.getElementById('fromInput').value = '';
+      document.getElementById('toInput').value = '';
+      document.getElementById('peopleContainer').innerHTML = '';
+      addPersonRow();
+    }
+
+    /* ── API ────────────────────── */
+
+    var API = '/api';
+
+    /* Mock store – lives only in memory for the session */
+    var _mock = {};
+
+    function _mockHandle(method, path, body) {
+      return new Promise(function(resolve, reject) {
+        setTimeout(function() {          /* simulate ~400 ms latency */
+          /* POST /movements */
+          if (method === 'POST' && path === '/movements') {
+            var code = 'MOCK-' + Math.random().toString(36).slice(2,6).toUpperCase();
+            var entry = {
+              code: code, people: body.people, from: body.from, to: body.to,
+              peopleCount: body.people.length, status: 'IN_PROGRESS',
+              startedAt: new Date().toISOString()
+            };
+            _mock[code] = entry;
+            return resolve(entry);
+          }
+          /* GET /movements/:code */
+          var getMatch = path.match(/^\/movements\/([^/]+)$/);
+          if (method === 'GET' && getMatch) {
+            var rec = _mock[getMatch[1]];
+            if (!rec) return reject(new Error('Переміщення не знайдено (mock)'));
+            return resolve(Object.assign({}, rec));
+          }
+          /* POST /movements/:code/finish */
+          var finishMatch = path.match(/^\/movements\/([^/]+)\/finish$/);
+          if (method === 'POST' && finishMatch) {
+            var r = _mock[finishMatch[1]];
+            if (!r) return reject(new Error('Переміщення не знайдено (mock)'));
+            r.status = 'DONE';
+            return resolve({ ok: true });
+          }
+          reject(new Error('Unknown mock route'));
+        }, 400);
+      });
+    }
+
+    var _apiUnavailable = false;
+
+    function apiFetch(method, path, body) {
+      if (_apiUnavailable) return _mockHandle(method, path, body);
+      var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      return fetch(API + path, opts).then(function(r) {
+        return r.json().then(function(data) {
+          if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+          return data;
+        });
+      }).catch(function(e) {
+        /* Network / fetch error → switch to mock mode for the session */
+        if (e instanceof TypeError || e.message === 'Failed to fetch' ||
+            (e.message && e.message.toLowerCase().includes('failed to fetch'))) {
+          _apiUnavailable = true;
+          showMockBanner();
+          return _mockHandle(method, path, body);
+        }
+        throw e;
+      });
+    }
+
+    function showMockBanner() {
+      var b = document.getElementById('offlineBadge');
+      if (b) b.classList.remove('hidden');
+    }
+
+    /* ── Start ──────────────────── */
+
+    function submitStart() {
+      clearMessage('startMessage');
+      var people = getCurrentlySelectedPeople();
+      var from = document.getElementById('fromInput').value.trim();
+      var to   = document.getElementById('toInput').value.trim();
+
+      if (!people.length)   { showMessage('startMessage', 'Введіть хоча б одну людину', 'error'); return; }
+      if (!from)            { showMessage('startMessage', 'Вкажіть "Звідки"', 'error'); return; }
+      if (!to)              { showMessage('startMessage', 'Вкажіть "Куди"', 'error'); return; }
+      if (hasActiveMovement()) { showMessage('startMessage', 'Спочатку завершіть поточне переміщення', 'error'); return; }
+
+      var btn = document.getElementById('startBtn');
+      setButtonLoading(btn, true);
+
+      apiFetch('POST', '/movements', { people: people, from: from, to: to })
+        .then(function(result) {
+          setButtonLoading(btn, false);
+          setStoredCode(result.code);
+          document.getElementById('codeInput').value = result.code;
+          clearStartForm();
+          updateLockedState();
+          showScreen('finishScreen');
+          injectMovementInfo(result, false);
+        })
+        .catch(function(e) {
+          setButtonLoading(btn, false);
+          showMessage('startMessage', e.message || 'Помилка', 'error');
+        });
+    }
+
+    /* ── Movement info ──────────── */
+
+    function injectMovementInfo(result, fromServer) {
+      currentMovement = result;
+      updateHeaderBackBtn();
+      document.getElementById('infoPeople').textContent = (result.people || []).join(', ');
+      document.getElementById('infoFrom').textContent = result.from || '';
+      document.getElementById('infoTo').textContent = result.to || '';
+
+      var finishBtn = document.getElementById('finishBtn');
+      finishBtn.innerHTML = (result.peopleCount || 0) > 1 ? 'ПРИБУЛИ' : 'ПРИБУВ';
+      finishBtn.disabled = result.status === 'DONE';
+      document.getElementById('movementInfo').classList.remove('hidden');
+
+      if (fromServer && result.status === 'DONE') {
+        showMessage('finishMessage', 'Це переміщення вже завершено', 'success');
+      } else {
+        clearMessage('finishMessage');
+      }
+    }
+
+    /* ── Find ───────────────────── */
+
+    function findMovement() {
+      clearMessage('finishMessage');
+      document.getElementById('movementInfo').classList.add('hidden');
+      currentMovement = null;
+
+      var code = document.getElementById('codeInput').value.trim().toUpperCase();
+      if (!code) { showMessage('finishMessage', 'Введіть код переміщення', 'error'); return; }
+
+      setStoredCode(code);
+      updateLockedState();
+
+      var btn = document.getElementById('findBtn');
+      setButtonLoading(btn, true);
+
+      apiFetch('GET', '/movements/' + code)
+        .then(function(result) {
+          setButtonLoading(btn, false);
+          document.getElementById('codeInput').value = result.code;
+          setStoredCode(result.code);
+          updateLockedState();
+          injectMovementInfo(result, true);
+          showScreen('finishScreen');
+        })
+        .catch(function(e) {
+          setButtonLoading(btn, false);
+          showMessage('finishMessage', e.message || 'Помилка пошуку', 'error');
+        });
+    }
+
+    /* ── Finish ─────────────────── */
+
+    function submitFinish() {
+      clearMessage('finishMessage');
+      if (!currentMovement) { showMessage('finishMessage', 'Спочатку завантажте переміщення', 'error'); return; }
+
+      var btn = document.getElementById('finishBtn');
+      setButtonLoading(btn, true);
+
+      apiFetch('POST', '/movements/' + currentMovement.code + '/finish')
+        .then(function() {
+          setButtonLoading(btn, false);
+          setStoredCode('');
+          currentMovement = null;
+          updateLockedState();
+          showScreen('doneScreen');
+          if (redirectTimer) clearTimeout(redirectTimer);
+          redirectTimer = setTimeout(function() {
+            document.getElementById('codeInput').value = '';
+            document.getElementById('movementInfo').classList.add('hidden');
+            clearMessage('finishMessage');
+            showScreen('startScreen');
+          }, 5000);
+        })
+        .catch(function(e) {
+          setButtonLoading(btn, false);
+          showMessage('finishMessage', e.message || 'Помилка завершення', 'error');
+        });
+    }
+
+    /* ── Helpers ────────────────── */
+
+    function goBack() {
+      setStoredCode('');
+      currentMovement = null;
+      updateLockedState();
+      document.getElementById('codeInput').value = '';
+      document.getElementById('movementInfo').classList.add('hidden');
+      clearMessage('finishMessage');
+      showScreen('startScreen');
+    }
+
+    function openFinishFromEmergency() {
+      showScreen('finishScreen');
+      var code = getStoredCode();
+      if (code) {
+        document.getElementById('codeInput').value = code;
+        findMovement();
+      } else {
+        document.getElementById('codeInput').focus();
+      }
+    }
+
+    /* ── Init ───────────────────── */
+
+    window.onload = function() {
+      addPersonRow();
+      var storedCode = getStoredCode();
+      updateLockedState();
+      if (storedCode) {
+        document.getElementById('codeInput').value = storedCode;
+        showScreen('finishScreen');
+        findMovement();
+      } else {
+        showScreen('startScreen');
+      }
+    };
+  </script>
+</body>
+</html>
