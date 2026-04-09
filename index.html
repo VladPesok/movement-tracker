@@ -522,9 +522,10 @@
           return data;
         });
       }).catch(function(e) {
-        /* Network error OR non-JSON response (hosting 404 page) → mock mode */
+        /* Network error, non-JSON response, or 405 (hosting rewrite not set up) → mock mode */
         if (e instanceof TypeError || e instanceof SyntaxError ||
-            (e.message && e.message.toLowerCase().includes('failed to fetch'))) {
+            (e.message && e.message.toLowerCase().includes('failed to fetch')) ||
+            (e.message && e.message.includes('405'))) {
           _apiUnavailable = true;
           showMockBanner();
           return _mockHandle(method, path, body);
